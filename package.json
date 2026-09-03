@@ -1,0 +1,29 @@
+{
+  "name": "el-rincon-escolar",
+  "version": "1.0.0",
+  "description": "MVP de gestión de inventario para la papelería El Rincón Escolar",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "node --watch backend/server.js",
+    "start": "node backend/server.js",
+    "seed": "node backend/seed/products.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RafiuxMax01/el-rincon-escolar.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/RafiuxMax01/el-rincon-escolar/issues"
+  },
+  "homepage": "https://github.com/RafiuxMax01/el-rincon-escolar#readme",
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "mongoose": "^9.9.4"
+  }
+}
