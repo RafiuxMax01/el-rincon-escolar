@@ -3,6 +3,7 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const Product = require("./models/product");
+const { esStockMinimoValido } = require("./validation");
 const path = require("path");
 
 const app = express();
@@ -32,7 +33,7 @@ app.get("/productos", async (req, res) => {
 app.put("/productos/:id", async (req, res) => {
   const { stockMinimo } = req.body || {};
 
-  if (typeof stockMinimo !== "number" || !Number.isFinite(stockMinimo) || stockMinimo < 0) {
+  if (!esStockMinimoValido(stockMinimo)) {
     return res.status(400).json({
       error: "El stock mínimo debe ser un número mayor o igual a cero",
     });
