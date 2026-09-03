@@ -26,7 +26,21 @@ async function cargarProductos() {
 
           <p>Stock disponible: ${producto.stock}</p>
 
-          <p>Stock mínimo: ${producto.stockMinimo}</p>
+          <form class="stock-minimo-form" data-producto-id="${producto._id}">
+            <label>
+              Stock mínimo:
+              <input
+                name="stockMinimo"
+                type="number"
+                min="0"
+                step="1"
+                value="${producto.stockMinimo}"
+                required
+              >
+            </label>
+            <button type="submit">Guardar</button>
+            <span class="mensaje-formulario" role="status"></span>
+          </form>
 
           <p class="${stockBajo ? "stock-bajo" : ""}">
             Estado: ${stockBajo ? "Reabastecer" : "Disponible"}
@@ -34,6 +48,10 @@ async function cargarProductos() {
         </article>
       `;
     }).join("");
+
+    document.querySelectorAll(".stock-minimo-form").forEach(formulario => {
+      formulario.addEventListener("submit", actualizarStockMinimo);
+    });
 
   } catch (error) {
     console.error(error);
@@ -43,6 +61,40 @@ async function cargarProductos() {
         No fue posible cargar el inventario.
       </p>
     `;
+  }
+}
+
+async function actualizarStockMinimo(evento) {
+  evento.preventDefault();
+
+  const formulario = evento.currentTarget;
+  const entrada = formulario.elements.stockMinimo;
+  const mensaje = formulario.querySelector(".mensaje-formulario");
+  const stockMinimo = Number(entrada.value);
+
+  if (!Number.isFinite(stockMinimo) || stockMinimo < 0) {
+    mensaje.textContent = "Usa un valor mayor o igual a 0.";
+    return;
+  }
+
+  mensaje.textContent = "Guardando...";
+
+  try {
+    const respuesta = await fetch(`/productos/${formulario.dataset.productoId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ stockMinimo }),
+    });
+
+    if (!respuesta.ok) {
+      const resultado = await respuesta.json();
+      throw new Error(resultado.error || "No se pudo guardar el stock mínimo");
+    }
+
+    mensaje.textContent = "Guardado";
+    await cargarProductos();
+  } catch (error) {
+    mensaje.textContent = error.message;
   }
 }
 
