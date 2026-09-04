@@ -62,4 +62,44 @@ section h2 {
 
 .stock-bajo {
   font-weight: bold;
+  #form-venta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 300px;
+}
+
+#form-venta label {
+  font-weight: bold;
+}
+
+#form-venta select,
+#form-venta input {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+#form-venta button {
+  background-color: #1f2937;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+#form-venta button:hover {
+  background-color: #374151;
+}
+
+.mensaje-exito {
+  color: #15803d;
+  font-weight: bold;
+}
+
+.mensaje-error {
+  color: #b91c1c;
+  font-weight: bold;
+}
 }
