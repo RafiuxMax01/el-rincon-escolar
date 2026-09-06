@@ -1,11 +1,14 @@
 require("dotenv").config();
+
 const express = require("express");
 const mongoose = require("mongoose");
 const Product = require("./models/product");
+const { esStockMinimoValido } = require("./validation");
 const path = require("path");
+
 const app = express();
 
-app.use(express.json()); // necesario para leer req.body en POST
+app.use(express.json());
 app.use(express.static(path.join(__dirname, "../frontend")));
 
 const PORT = process.env.PORT || 3000;
@@ -15,9 +18,11 @@ app.get("/", (req, res) => {
   res.send("El Rincón Escolar - servidor funcionando");
 });
 
+// Consultar inventario de productos
 app.get("/productos", async (req, res) => {
   try {
     const productos = await Product.find();
+
     res.json(productos);
   } catch (error) {
     res.status(500).json({
@@ -26,17 +31,63 @@ app.get("/productos", async (req, res) => {
   }
 });
 
+// Actualizar stock mínimo de un producto
+app.put("/productos/:id", async (req, res) => {
+  const { stockMinimo } = req.body || {};
+
+  if (!esStockMinimoValido(stockMinimo)) {
+    return res.status(400).json({
+      error: "El stock mínimo debe ser un número mayor o igual a cero",
+    });
+  }
+
+  try {
+    const producto = await Product.findByIdAndUpdate(
+      req.params.id,
+      { stockMinimo },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
+    if (!producto) {
+      return res.status(404).json({
+        error: "Producto no encontrado",
+      });
+    }
+
+    res.json(producto);
+  } catch (error) {
+    if (error.name === "CastError") {
+      return res.status(400).json({
+        error: "Identificador de producto inválido",
+      });
+    }
+
+    res.status(500).json({
+      error: "Error al actualizar el stock mínimo",
+    });
+  }
+});
+
+// Registrar una venta
 app.post("/ventas", async (req, res) => {
   try {
     const { productoId, cantidad } = req.body;
 
     if (!productoId) {
-      return res.status(400).json({ error: "Debe indicar el producto." });
+      return res.status(400).json({
+        error: "Debe indicar el producto.",
+      });
     }
 
     const cantidadVendida = Number(cantidad);
 
-    if (!Number.isInteger(cantidadVendida) || cantidadVendida <= 0) {
+    if (
+      !Number.isInteger(cantidadVendida) ||
+      cantidadVendida <= 0
+    ) {
       return res.status(400).json({
         error: "La cantidad vendida debe ser un número entero mayor a 0.",
       });
@@ -45,7 +96,9 @@ app.post("/ventas", async (req, res) => {
     const producto = await Product.findById(productoId);
 
     if (!producto) {
-      return res.status(404).json({ error: "Producto no encontrado." });
+      return res.status(404).json({
+        error: "Producto no encontrado.",
+      });
     }
 
     if (cantidadVendida > producto.stock) {
@@ -55,6 +108,7 @@ app.post("/ventas", async (req, res) => {
     }
 
     producto.stock -= cantidadVendida;
+
     await producto.save();
 
     res.json({
@@ -63,21 +117,34 @@ app.post("/ventas", async (req, res) => {
     });
   } catch (error) {
     if (error.name === "CastError") {
-      return res.status(400).json({ error: "ID de producto inválido." });
+      return res.status(400).json({
+        error: "ID de producto inválido.",
+      });
     }
-    res.status(500).json({ error: "Error al registrar la venta." });
+
+    res.status(500).json({
+      error: "Error al registrar la venta.",
+    });
   }
 });
 
 async function startServer() {
   try {
     await mongoose.connect(MONGODB_URI);
+
     console.log("Conectado a MongoDB");
+
     app.listen(PORT, () => {
-      console.log(`Servidor ejecutándose en http://localhost:${PORT}`);
+      console.log(
+        `Servidor ejecutándose en http://localhost:${PORT}`
+      );
     });
   } catch (error) {
-    console.error("Error al conectar con MongoDB:", error.message);
+    console.error(
+      "Error al conectar con MongoDB:",
+      error.message
+    );
+
     process.exit(1);
   }
 }
