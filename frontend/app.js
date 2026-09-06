@@ -16,12 +16,32 @@ async function cargarProductos() {
     if (productos.length === 0) {
       inventario.innerHTML = "<p>No hay productos registrados.</p>";
     } else {
-      inventario.innerHTML = productos.map(producto => {
-        const stockBajo = producto.stock <= producto.stockMinimo;
+      const totalAlertas = productos.filter(
+        producto => producto.stockBajo
+      ).length;
+
+      const resumen = totalAlertas === 0
+        ? `<p class="resumen-alertas sin-alertas" role="status">
+             Todos los productos están por encima de su stock mínimo.
+           </p>`
+        : `<p class="resumen-alertas" role="alert">
+             ${totalAlertas === 1
+               ? "1 producto está por debajo de su stock mínimo."
+               : `${totalAlertas} productos están por debajo de su stock mínimo.`}
+           </p>`;
+
+      inventario.innerHTML = resumen + productos.map(producto => {
+        const stockBajo = producto.stockBajo;
 
         return `
-          <article class="producto">
+          <article class="producto ${stockBajo ? "producto-alerta" : ""}">
             <h3>${producto.nombre}</h3>
+
+            ${stockBajo
+              ? `<p class="alerta-stock" role="alert">
+                   Bajo inventario: reabastecer
+                 </p>`
+              : ""}
 
             <p>Precio: $${producto.precio}</p>
 
@@ -47,6 +67,7 @@ async function cargarProductos() {
 
             <p class="${stockBajo ? "stock-bajo" : ""}">
               Estado: ${stockBajo ? "Reabastecer" : "Disponible"}
+              (mínimo: ${producto.stockMinimo})
             </p>
           </article>
         `;
