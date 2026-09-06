@@ -38,7 +38,7 @@ async function cargarProductos() {
             <h3>${producto.nombre}</h3>
 
             ${stockBajo
-              ? `<p class="alerta-stock" role="alert">
+              ? `<p class="alerta-stock">
                    Bajo inventario: reabastecer
                  </p>`
               : ""}
