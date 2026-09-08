@@ -3,7 +3,7 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const Product = require("./models/product");
-const { esStockMinimoValido } = require("./validation");
+const { esStockMinimoValido, tieneStockBajo } = require("./validation");
 const path = require("path");
 
 const app = express();
@@ -21,9 +21,16 @@ app.get("/", (req, res) => {
 // Consultar inventario de productos
 app.get("/productos", async (req, res) => {
   try {
-    const productos = await Product.find();
+    const productos = await Product.find().lean();
 
-    res.json(productos);
+    // IN-23: marcar cada producto como de bajo inventario para que el
+    // encargado vea la alerta al consultar el inventario.
+    res.json(
+      productos.map((producto) => ({
+        ...producto,
+        stockBajo: tieneStockBajo(producto),
+      }))
+    );
   } catch (error) {
     res.status(500).json({
       error: "Error al consultar los productos",
