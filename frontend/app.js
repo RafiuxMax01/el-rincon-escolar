@@ -1,191 +1,697 @@
-let productosCache = [];
+const inventario = document.getElementById("inventario");
+
+const productoSelect = document.getElementById("producto-select");
+const cantidadInput = document.getElementById("cantidad-input");
+
+const formVenta = document.getElementById("form-venta");
+const mensajeVenta = document.getElementById("mensaje-venta");
+
+const formProducto = document.getElementById("form-producto");
+const mensajeProducto = document.getElementById("mensaje-producto");
+
+const historialBody = document.getElementById("historial-body");
+const masVendidos = document.getElementById("mas-vendidos");
+
+const resumenVentas = document.getElementById("resumen-ventas");
+const resumenProductos = document.getElementById("resumen-productos");
+const resumenIngresos = document.getElementById("resumen-ingresos");
+
+const btnActualizar = document.getElementById("btn-actualizar");
+const btnHistorial = document.getElementById("btn-historial");
+
+
+// ============================================
+// FUNCIONES AUXILIARES
+// ============================================
+
+function formatearMoneda(valor) {
+    return Number(valor).toLocaleString("es-MX", {
+        style: "currency",
+        currency: "MXN"
+    });
+}
+
+
+function formatearFecha(fecha) {
+    return new Date(fecha).toLocaleString("es-MX", {
+        dateStyle: "short",
+        timeStyle: "short"
+    });
+}
+
+
+// ============================================
+// CARGAR PRODUCTOS
+// ============================================
 
 async function cargarProductos() {
-  const inventario = document.getElementById("inventario");
 
-  try {
-    const respuesta = await fetch("/productos");
+    try {
 
-    if (!respuesta.ok) {
-      throw new Error("No se pudieron obtener los productos");
+        const respuesta = await fetch("/productos");
+
+        if (!respuesta.ok) {
+            throw new Error("No se pudieron obtener los productos.");
+        }
+
+        const productos = await respuesta.json();
+
+        renderizarInventario(productos);
+        cargarSelectProductos(productos);
+
+    } catch (error) {
+
+        console.error(error);
+
+        inventario.innerHTML = `
+            <p class="error">
+                No se pudo cargar el inventario.
+            </p>
+        `;
     }
+}
 
-    const productos = await respuesta.json();
-    productosCache = productos;
+
+// ============================================
+// MOSTRAR INVENTARIO
+// ============================================
+
+function renderizarInventario(productos) {
 
     if (productos.length === 0) {
-      inventario.innerHTML = "<p>No hay productos registrados.</p>";
-    } else {
-      inventario.innerHTML = productos.map(producto => {
-        const stockBajo = producto.stock <= producto.stockMinimo;
 
-        return `
-          <article class="producto">
-            <h3>${producto.nombre}</h3>
-
-            <p>Precio: $${producto.precio}</p>
-
-            <p>Stock disponible: ${producto.stock}</p>
-
-            <form class="stock-minimo-form" data-producto-id="${producto._id}">
-              <label>
-                Stock mínimo:
-                <input
-                  name="stockMinimo"
-                  type="number"
-                  min="0"
-                  step="1"
-                  value="${producto.stockMinimo}"
-                  required
-                >
-              </label>
-
-              <button type="submit">Guardar</button>
-
-              <span class="mensaje-formulario" role="status"></span>
-            </form>
-
-            <p class="${stockBajo ? "stock-bajo" : ""}">
-              Estado: ${stockBajo ? "Reabastecer" : "Disponible"}
-            </p>
-          </article>
+        inventario.innerHTML = `
+            <p>No hay productos registrados.</p>
         `;
-      }).join("");
+
+        return;
     }
 
-    llenarSelectProductos(productos);
+    inventario.innerHTML = "";
 
-    document.querySelectorAll(".stock-minimo-form").forEach(formulario => {
-      formulario.addEventListener("submit", actualizarStockMinimo);
+    productos.forEach(producto => {
+
+        const stockBajo =
+            producto.stock <= producto.stockMinimo;
+
+        const tarjeta = document.createElement("article");
+
+        tarjeta.className = "producto-card";
+
+        tarjeta.innerHTML = `
+
+            <div class="producto-info">
+
+                <h3>${producto.nombre}</h3>
+
+                <p>
+                    Precio:
+                    <strong>
+                        ${formatearMoneda(producto.precio)}
+                    </strong>
+                </p>
+
+                <p>
+                    Stock actual:
+                    <strong>
+                        ${producto.stock}
+                    </strong>
+                </p>
+
+                <p>
+                    Stock mínimo:
+                    <strong>
+                        ${producto.stockMinimo}
+                    </strong>
+                </p>
+
+                ${
+                    stockBajo
+                        ? `<span class="alerta-stock">
+                            Stock bajo
+                           </span>`
+                        : `<span class="stock-normal">
+                            Stock disponible
+                           </span>`
+                }
+
+            </div>
+
+            <form
+                class="form-reabastecer"
+                data-id="${producto._id}"
+            >
+
+                <label>
+                    Agregar stock
+                </label>
+
+                <div class="fila-stock">
+
+                    <input
+                        type="number"
+                        name="cantidad"
+                        min="1"
+                        step="1"
+                        value="1"
+                        required
+                    >
+
+                    <button type="submit">
+                        Agregar
+                    </button>
+
+                </div>
+
+            </form>
+        `;
+
+        inventario.appendChild(tarjeta);
     });
 
-  } catch (error) {
-    console.error(error);
 
-    inventario.innerHTML = `
-      <p>
-        No fue posible cargar el inventario.
-      </p>
+    // Eventos para reabastecer
+    document
+        .querySelectorAll(".form-reabastecer")
+        .forEach(form => {
+
+            form.addEventListener("submit", reabastecerProducto);
+        });
+}
+
+
+// ============================================
+// SELECT DE PRODUCTOS
+// ============================================
+
+function cargarSelectProductos(productos) {
+
+    productoSelect.innerHTML = `
+        <option value="">
+            Selecciona un producto
+        </option>
     `;
-  }
-}
 
-function llenarSelectProductos(productos) {
-  const select = document.getElementById("producto-select");
+    productos.forEach(producto => {
 
-  select.innerHTML =
-    '<option value="">Selecciona un producto</option>' +
-    productos.map(producto =>
-      `<option value="${producto._id}">${producto.nombre} (stock: ${producto.stock})</option>`
-    ).join("");
-}
+        const option = document.createElement("option");
 
-async function registrarVenta(event) {
-  event.preventDefault();
+        option.value = producto._id;
 
-  const mensaje = document.getElementById("mensaje-venta");
-  const productoId = document.getElementById("producto-select").value;
-  const cantidad = Number(
-    document.getElementById("cantidad-input").value
-  );
+        option.textContent =
+            `${producto.nombre} — Stock: ${producto.stock}`;
 
-  mensaje.textContent = "";
-  mensaje.className = "";
+        option.disabled = producto.stock === 0;
 
-  if (!productoId) {
-    mensaje.textContent = "Selecciona un producto.";
-    mensaje.className = "mensaje-error";
-    return;
-  }
-
-  try {
-    const respuesta = await fetch("/ventas", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        productoId,
-        cantidad
-      })
+        productoSelect.appendChild(option);
     });
-
-    const datos = await respuesta.json();
-
-    if (!respuesta.ok) {
-      mensaje.textContent =
-        datos.error || "No se pudo registrar la venta.";
-      mensaje.className = "mensaje-error";
-      return;
-    }
-
-    mensaje.textContent =
-      `Venta registrada: ${datos.producto.nombre} (nuevo stock: ${datos.producto.stock})`;
-
-    mensaje.className = "mensaje-exito";
-
-    document.getElementById("form-venta").reset();
-
-    cargarProductos();
-
-  } catch (error) {
-    console.error(error);
-
-    mensaje.textContent =
-      "Error al conectar con el servidor.";
-
-    mensaje.className = "mensaje-error";
-  }
 }
 
-document
-  .getElementById("form-venta")
-  .addEventListener("submit", registrarVenta);
 
-async function actualizarStockMinimo(evento) {
-  evento.preventDefault();
+// ============================================
+// CREAR PRODUCTO
+// ============================================
 
-  const formulario = evento.currentTarget;
-  const entrada = formulario.elements.stockMinimo;
-  const mensaje = formulario.querySelector(".mensaje-formulario");
-  const stockMinimo = Number(entrada.value);
+formProducto.addEventListener("submit", async event => {
 
-  if (!Number.isFinite(stockMinimo) || stockMinimo < 0) {
-    mensaje.textContent = "Usa un valor mayor o igual a 0.";
-    return;
-  }
+    event.preventDefault();
 
-  mensaje.textContent = "Guardando...";
+    mensajeProducto.textContent = "";
 
-  try {
-    const respuesta = await fetch(
-      `/productos/${formulario.dataset.productoId}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          stockMinimo
-        })
-      }
-    );
+    const nombre =
+        document.getElementById("nombre-producto").value;
 
-    if (!respuesta.ok) {
-      const resultado = await respuesta.json();
+    const precio =
+        document.getElementById("precio-producto").value;
 
-      throw new Error(
-        resultado.error || "No se pudo guardar el stock mínimo"
-      );
+    const stock =
+        document.getElementById("stock-producto").value;
+
+    const stockMinimo =
+        document.getElementById("stock-minimo-producto").value;
+
+
+    try {
+
+        const respuesta = await fetch("/productos", {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+                nombre,
+                precio,
+                stock,
+                stockMinimo
+            })
+        });
+
+
+        const datos = await respuesta.json();
+
+
+        if (!respuesta.ok) {
+            throw new Error(
+                datos.error || "No se pudo crear el producto."
+            );
+        }
+
+
+        mensajeProducto.textContent =
+            datos.mensaje;
+
+        mensajeProducto.className =
+            "mensaje exito";
+
+
+        formProducto.reset();
+
+        document.getElementById("stock-producto").value = 0;
+        document.getElementById("stock-minimo-producto").value = 0;
+
+
+        await cargarProductos();
+        await cargarResumen();
+        await cargarMasVendidos();
+        await cargarHistorial();
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        mensajeProducto.textContent =
+            error.message;
+
+        mensajeProducto.className =
+            "mensaje error";
     }
+});
 
-    mensaje.textContent = "Guardado";
+
+// ============================================
+// REABASTECER PRODUCTO
+// ============================================
+
+async function reabastecerProducto(event) {
+
+    event.preventDefault();
+
+    const form = event.currentTarget;
+
+    const productoId = form.dataset.id;
+
+    const cantidad =
+        form.querySelector('input[name="cantidad"]').value;
+
+
+    try {
+
+        const respuesta = await fetch(
+            `/productos/${productoId}/stock`,
+            {
+                method: "PATCH",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    cantidad
+                })
+            }
+        );
+
+
+        const datos = await respuesta.json();
+
+
+        if (!respuesta.ok) {
+
+            throw new Error(
+                datos.error ||
+                "No se pudo actualizar el stock."
+            );
+        }
+
+
+        alert(datos.mensaje);
+
+        await cargarProductos();
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert(error.message);
+    }
+}
+
+
+// ============================================
+// REGISTRAR VENTA
+// ============================================
+
+formVenta.addEventListener("submit", async event => {
+
+    event.preventDefault();
+
+    mensajeVenta.textContent = "";
+
+    const productoId =
+        productoSelect.value;
+
+    const cantidad =
+        cantidadInput.value;
+
+
+    try {
+
+        const respuesta = await fetch("/ventas", {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+                productoId,
+                cantidad
+            })
+        });
+
+
+        const datos = await respuesta.json();
+
+
+        if (!respuesta.ok) {
+
+            throw new Error(
+                datos.error ||
+                "No se pudo registrar la venta."
+            );
+        }
+
+
+        mensajeVenta.textContent =
+            `${datos.mensaje} Total: ${formatearMoneda(datos.venta.total)}`;
+
+        mensajeVenta.className =
+            "mensaje exito";
+
+
+        cantidadInput.value = 1;
+
+
+        await cargarProductos();
+        await cargarResumen();
+        await cargarHistorial();
+        await cargarMasVendidos();
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        mensajeVenta.textContent =
+            error.message;
+
+        mensajeVenta.className =
+            "mensaje error";
+    }
+});
+
+
+// ============================================
+// RESUMEN
+// ============================================
+
+async function cargarResumen() {
+
+    try {
+
+        const respuesta =
+            await fetch("/ventas/resumen");
+
+        if (!respuesta.ok) {
+            throw new Error(
+                "No se pudo obtener el resumen."
+            );
+        }
+
+        const resumen =
+            await respuesta.json();
+
+
+        resumenVentas.textContent =
+            resumen.ventasRealizadas;
+
+        resumenProductos.textContent =
+            resumen.productosVendidos;
+
+        resumenIngresos.textContent =
+            formatearMoneda(
+                resumen.ingresosTotales
+            );
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        resumenVentas.textContent = "-";
+        resumenProductos.textContent = "-";
+        resumenIngresos.textContent = "-";
+    }
+}
+
+
+// ============================================
+// PRODUCTOS MÁS VENDIDOS
+// ============================================
+
+async function cargarMasVendidos() {
+
+    try {
+
+        const respuesta =
+            await fetch("/ventas/mas-vendidos");
+
+        if (!respuesta.ok) {
+            throw new Error(
+                "No se pudieron obtener los productos más vendidos."
+            );
+        }
+
+        const productos =
+            await respuesta.json();
+
+
+        if (productos.length === 0) {
+
+            masVendidos.innerHTML = `
+                <p>
+                    Todavía no hay ventas registradas.
+                </p>
+            `;
+
+            return;
+        }
+
+
+        const lista = document.createElement("div");
+
+        lista.className = "lista-mas-vendidos";
+
+
+        productos.forEach((producto, indice) => {
+
+            const elemento =
+                document.createElement("div");
+
+            elemento.className =
+                "mas-vendido-item";
+
+
+            elemento.innerHTML = `
+
+                <div>
+
+                    <strong>
+                        ${indice + 1}. ${producto.nombreProducto}
+                    </strong>
+
+                    <span>
+                        ${producto.cantidadVendida}
+                        unidades vendidas
+                    </span>
+
+                </div>
+
+                <strong>
+                    ${formatearMoneda(producto.ingresos)}
+                </strong>
+
+            `;
+
+
+            lista.appendChild(elemento);
+        });
+
+
+        masVendidos.innerHTML = "";
+
+        masVendidos.appendChild(lista);
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        masVendidos.innerHTML = `
+            <p class="error">
+                No se pudieron cargar los productos más vendidos.
+            </p>
+        `;
+    }
+}
+
+
+// ============================================
+// HISTORIAL
+// ============================================
+
+async function cargarHistorial() {
+
+    try {
+
+        const respuesta =
+            await fetch("/ventas");
+
+        if (!respuesta.ok) {
+            throw new Error(
+                "No se pudo obtener el historial."
+            );
+        }
+
+        const ventas =
+            await respuesta.json();
+
+
+        historialBody.innerHTML = "";
+
+
+        if (ventas.length === 0) {
+
+            historialBody.innerHTML = `
+                <tr>
+                    <td colspan="5">
+                        No hay ventas registradas.
+                    </td>
+                </tr>
+            `;
+
+            return;
+        }
+
+
+        ventas.forEach(venta => {
+
+            const fila =
+                document.createElement("tr");
+
+
+            fila.innerHTML = `
+
+                <td>
+                    ${formatearFecha(venta.fecha)}
+                </td>
+
+                <td>
+                    ${venta.nombreProducto}
+                </td>
+
+                <td>
+                    ${venta.cantidad}
+                </td>
+
+                <td>
+                    ${formatearMoneda(venta.precioUnitario)}
+                </td>
+
+                <td>
+                    <strong>
+                        ${formatearMoneda(venta.total)}
+                    </strong>
+                </td>
+
+            `;
+
+
+            historialBody.appendChild(fila);
+        });
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        historialBody.innerHTML = `
+            <tr>
+                <td colspan="5">
+                    Error al cargar el historial.
+                </td>
+            </tr>
+        `;
+    }
+}
+
+
+// ============================================
+// BOTONES
+// ============================================
+
+btnActualizar.addEventListener(
+    "click",
+    async () => {
+
+        await cargarProductos();
+        await cargarResumen();
+        await cargarMasVendidos();
+    }
+);
+
+
+btnHistorial.addEventListener(
+    "click",
+    async () => {
+
+        await cargarHistorial();
+        await cargarResumen();
+        await cargarMasVendidos();
+    }
+);
+
+
+// ============================================
+// INICIALIZACIÓN
+// ============================================
+
+async function iniciarAplicacion() {
 
     await cargarProductos();
 
-  } catch (error) {
-    mensaje.textContent = error.message;
-  }
+    await cargarResumen();
+
+    await cargarHistorial();
+
+    await cargarMasVendidos();
 }
 
-cargarProductos();
+
+iniciarAplicacion();

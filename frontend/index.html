@@ -1,54 +1,266 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>El Rincón Escolar - Sistema de Gestión</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>El Rincón Escolar</title>
+
+    <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-  <header class="main-header">
-    <div class="header-content">
-      <div class="header-title">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path><circle cx="11" cy="11" r="2"></circle></svg>
-        <h1>El Rincón Escolar</h1>
-      </div>
-      <p>Gestión de Inventario y Ventas</p>
-    </div>
-  </header>
 
-  <main class="dashboard">
-    <section class="panel sales-panel">
-      <div class="panel-header">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-        <h2>Registrar Venta</h2>
-      </div>
-      <form id="form-venta" class="form-container">
-        <div class="form-group">
-          <label for="producto-select">Producto a vender</label>
-          <select id="producto-select" required>
-            <option value="">Selecciona un producto</option>
-          </select>
+    <header class="encabezado">
+        <div>
+            <h1>El Rincón Escolar</h1>
+            <p>Sistema de inventario y ventas</p>
         </div>
-        <div class="form-group">
-          <label for="cantidad-input">Cantidad</label>
-          <input type="number" id="cantidad-input" min="1" required placeholder="Ej: 2">
-        </div>
-        <button type="submit" class="btn btn-primary">Registrar Venta</button>
-      </form>
-      <p id="mensaje-venta"></p>
-    </section>
+    </header>
 
-    <section class="panel inventory-panel">
-      <div class="panel-header">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-        <h2>Productos Disponibles</h2>
-      </div>
-      <div id="inventario" class="grid-productos">
-        <p class="loading">Cargando catálogo...</p>
-      </div>
-    </section>
-  </main>
-  <script src="app.js"></script>
+    <main class="contenedor">
+
+        <!-- ================================= -->
+        <!-- RESUMEN -->
+        <!-- ================================= -->
+
+        <section class="seccion">
+
+            <h2>Resumen de ventas</h2>
+
+            <div class="resumen-grid">
+
+                <div class="resumen-card">
+                    <span>Ventas realizadas</span>
+                    <strong id="resumen-ventas">0</strong>
+                </div>
+
+                <div class="resumen-card">
+                    <span>Productos vendidos</span>
+                    <strong id="resumen-productos">0</strong>
+                </div>
+
+                <div class="resumen-card">
+                    <span>Ingresos totales</span>
+                    <strong id="resumen-ingresos">$0.00</strong>
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- ================================= -->
+        <!-- REGISTRAR PRODUCTO -->
+        <!-- ================================= -->
+
+        <section class="seccion">
+
+            <h2>Registrar nuevo producto</h2>
+
+            <form id="form-producto" class="formulario">
+
+                <div class="campo">
+                    <label for="nombre-producto">
+                        Nombre
+                    </label>
+
+                    <input
+                        type="text"
+                        id="nombre-producto"
+                        placeholder="Ej. Marcador rojo"
+                        required
+                    >
+                </div>
+
+                <div class="campo">
+                    <label for="precio-producto">
+                        Precio
+                    </label>
+
+                    <input
+                        type="number"
+                        id="precio-producto"
+                        min="0"
+                        step="0.01"
+                        placeholder="0.00"
+                        required
+                    >
+                </div>
+
+                <div class="campo">
+                    <label for="stock-producto">
+                        Stock inicial
+                    </label>
+
+                    <input
+                        type="number"
+                        id="stock-producto"
+                        min="0"
+                        step="1"
+                        value="0"
+                        required
+                    >
+                </div>
+
+                <div class="campo">
+                    <label for="stock-minimo-producto">
+                        Stock mínimo
+                    </label>
+
+                    <input
+                        type="number"
+                        id="stock-minimo-producto"
+                        min="0"
+                        step="1"
+                        value="0"
+                        required
+                    >
+                </div>
+
+                <button type="submit">
+                    Registrar producto
+                </button>
+
+            </form>
+
+            <p id="mensaje-producto" class="mensaje"></p>
+
+        </section>
+
+        <!-- ================================= -->
+        <!-- REGISTRAR VENTA -->
+        <!-- ================================= -->
+
+        <section class="seccion">
+
+            <h2>Registrar venta</h2>
+
+            <form id="form-venta" class="formulario">
+
+                <div class="campo">
+                    <label for="producto-select">
+                        Producto
+                    </label>
+
+                    <select id="producto-select" required>
+                        <option value="">
+                            Selecciona un producto
+                        </option>
+                    </select>
+                </div>
+
+                <div class="campo">
+                    <label for="cantidad-input">
+                        Cantidad
+                    </label>
+
+                    <input
+                        type="number"
+                        id="cantidad-input"
+                        min="1"
+                        step="1"
+                        value="1"
+                        required
+                    >
+                </div>
+
+                <button type="submit">
+                    Registrar venta
+                </button>
+
+            </form>
+
+            <p id="mensaje-venta" class="mensaje"></p>
+
+        </section>
+
+        <!-- ================================= -->
+        <!-- INVENTARIO -->
+        <!-- ================================= -->
+
+        <section class="seccion">
+
+            <div class="titulo-seccion">
+                <div>
+                    <h2>Inventario</h2>
+                    <p>Productos disponibles y existencias actuales.</p>
+                </div>
+
+                <button
+                    type="button"
+                    id="btn-actualizar"
+                >
+                    Actualizar
+                </button>
+            </div>
+
+            <div id="inventario" class="inventario">
+                <!-- Productos generados mediante JavaScript -->
+            </div>
+
+        </section>
+
+        <!-- ================================= -->
+        <!-- PRODUCTOS MÁS VENDIDOS -->
+        <!-- ================================= -->
+
+        <section class="seccion">
+
+            <h2>Productos más vendidos</h2>
+
+            <div id="mas-vendidos">
+                <!-- Datos generados mediante JavaScript -->
+            </div>
+
+        </section>
+
+        <!-- ================================= -->
+        <!-- HISTORIAL -->
+        <!-- ================================= -->
+
+        <section class="seccion">
+
+            <div class="titulo-seccion">
+                <div>
+                    <h2>Historial de ventas</h2>
+                    <p>Registro de todas las ventas realizadas.</p>
+                </div>
+
+                <button
+                    type="button"
+                    id="btn-historial"
+                >
+                    Actualizar historial
+                </button>
+            </div>
+
+            <div class="tabla-contenedor">
+
+                <table>
+
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Producto</th>
+                            <th>Cantidad</th>
+                            <th>Precio unitario</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="historial-body">
+                        <!-- Historial generado mediante JavaScript -->
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <script src="app.js"></script>
+
 </body>
 </html>
