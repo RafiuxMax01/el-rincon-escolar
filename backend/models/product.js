@@ -18,12 +18,20 @@ const productSchema = new mongoose.Schema(
       type: Number,
       required: true,
       min: 0,
+      validate: {
+        validator: Number.isInteger,
+        message: "El stock debe ser un número entero.",
+      },
     },
 
     stockMinimo: {
       type: Number,
       required: true,
       min: 0,
+      validate: {
+        validator: Number.isInteger,
+        message: "El stock mínimo debe ser un número entero.",
+      },
     },
   },
   {
