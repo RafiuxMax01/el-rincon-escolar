@@ -2,7 +2,7 @@
 
 Sistema web para la gestión de inventario de la papelería **El Rincón Escolar**.
 
-El proyecto tiene como objetivo desarrollar un **MVP (Producto Mínimo Viable)** que permita al encargado consultar y mantener actualizado el inventario, registrar ventas que descuenten automáticamente las existencias y detectar productos que necesitan reabastecimiento mediante alertas visuales.
+El proyecto tiene como objetivo desarrollar un MVP que permita consultar y administrar el inventario de productos, controlar el stock mínimo, registrar ventas y detectar productos que necesitan reabastecimiento.
 
 ---
 
@@ -13,414 +13,239 @@ El proyecto tiene como objetivo desarrollar un **MVP (Producto Mínimo Viable)**
 * [Tecnologías](#tecnologías)
 * [Arquitectura](#arquitectura)
 * [Estructura del proyecto](#estructura-del-proyecto)
-* [Historias de Usuario](#historias-de-usuario)
+* [Sprints e Historias de Usuario](#sprints-e-historias-de-usuario)
+* [Definition of Done (DoD) y Sprint Review](#definition-of-done-dod-y-sprint-review)
 * [Requisitos previos](#requisitos-previos)
 * [Configuración inicial](#configuración-inicial)
-* [Configuración del archivo `.env`](#configuración-del-archivo-env)
-* [Ejecutar el proyecto](#ejecutar-el-proyecto)
-* [Flujo de trabajo](#flujo-de-trabajo-git-github-y-jira)
-* [Estado actual del proyecto](#estado-actual-del-proyecto)
+* [Flujo de trabajo con Git y GitHub](#flujo-de-trabajo-con-git-y-github)
+* [Flujo de trabajo con Jira](#flujo-de-trabajo-con-jira)
+* [Reglas importantes](#reglas-importantes)
+* [Próximas funcionalidades](#próximas-funcionalidades)
 
 ---
 
 ## Descripción del proyecto
 
-### El problema principal
+**El Rincón Escolar** es una aplicación web orientada a la gestión del inventario de una papelería. El problema principal que busca resolver el sistema es la falta de visibilidad sobre las existencias, definido por el cliente de la siguiente manera:
 
-> "Se nos acaba el producto sin darnos cuenta, y a veces compramos de más de algo que ya teníamos harto. Queremos saber qué tenemos y cuánto, para no quedarnos sin lo que más se vende."
+> *"Se nos acaba el producto sin darnos cuenta, y a veces compramos de más de algo que ya teníamos harto. Queremos saber qué tenemos y cuánto, para no quedarnos sin lo que más se vende."*
 
-Actualmente, la papelería carece de visibilidad sobre sus existencias. Para solucionar este problema, el sistema proporciona las siguientes funcionalidades:
+Actualmente, el negocio necesita:
 
-* **Visibilidad de inventario:** conocer qué productos hay disponibles y qué cantidad existe de cada uno.
-* **Control automático:** descontar inmediatamente las existencias al registrar una venta.
-* **Alertas de reabastecimiento:** mostrar avisos cuando un producto alcanza su nivel de stock mínimo.
-* **Stock mínimo personalizado:** establecer un nivel mínimo diferente para cada producto.
-* **Historial de métricas:** mantener un registro de productos vendidos para facilitar el análisis de ventas.
+* Consultar qué productos tiene disponibles y su cantidad actual.
+* Registrar una venta y que descuente del inventario automáticamente.
+* Ver una alerta cuando un producto esté por agotarse para reabastecer a tiempo.
+* Definir un stock mínimo (distinto por producto) para detonar las alertas.
+
+El sistema se desarrolla progresivamente mediante historias de usuario administradas en Jira.
 
 ---
 
 ## Objetivo
 
-Desarrollar un **MVP funcional de gestión de inventario** utilizando un stack basado en JavaScript y un flujo de trabajo colaborativo profesional mediante:
-
-* Git
-* GitHub
-* Jira
-* Ramas por historia de usuario
-* Pull Requests
-* Code Review
+Desarrollar un MVP funcional de gestión de inventario utilizando un stack basado en **Node.js, Express, MongoDB Atlas (Mongoose) y HTML/CSS/JS** puro para el frontend. El proyecto se desarrolla bajo un marco ágil con Sprints, empleando un flujo colaborativo basado en ramas, Pull Requests y revisión de código constante.
 
 ---
 
 ## Tecnologías
 
-### Backend
-
-| Tecnología   | Función                                            |
-| ------------ | -------------------------------------------------- |
-| **Node.js**  | Entorno de ejecución para JavaScript               |
-| **Express**  | Framework utilizado para el servidor y la API REST |
-| **Mongoose** | ODM para trabajar con MongoDB                      |
-| **dotenv**   | Gestión de variables de entorno                    |
-
-### Frontend
-
-| Tecnología             | Función                                |
-| ---------------------- | -------------------------------------- |
-| **HTML5**              | Estructura de la interfaz              |
-| **CSS3**               | Diseño y estilos visuales              |
-| **JavaScript Vanilla** | Lógica del cliente y consumo de la API |
-
-La interfaz está diseñada para ser adaptable y facilitar el uso diario del sistema.
-
-### Base de datos
-
-**MongoDB Atlas**
-
-Base de datos NoSQL alojada en la nube.
-
-Colección principal:
-
-```text
-products
-```
+* **Backend:** Node.js, Express, Mongoose, dotenv.
+* **Frontend:** HTML, CSS, JavaScript (Consumo de API REST).
+* **Base de datos:** MongoDB Atlas (Colección principal: `products` en la base `el_rincon_escolar`).
+* **Gestión y Control de Versiones:** Git, GitHub, Jira.
 
 ---
 
 ## Arquitectura
 
-La aplicación utiliza una arquitectura cliente-servidor directa:
+La aplicación sigue una arquitectura sencilla de frontend + backend + base de datos. Todos los desarrolladores se conectan a un clúster centralizado en MongoDB Atlas, eliminando la necesidad de bases de datos locales.
 
 ```text
-                  ┌─────────────────────┐
-                  │       Backend       │
-                  │    Node + Express   │
-                  └──────────┬──────────┘
-                             │
-                         Mongoose
-                             │
-                             ▼
-                  ┌─────────────────────┐
-                  │    MongoDB Atlas    │
-                  │      Database       │
-                  └──────────┬──────────┘
-                             ▲
-                             │
-                          API REST
-                             │
-                  ┌──────────┴──────────┐
-                  │      Frontend       │
-                  │    HTML / CSS / JS  │
-                  └─────────────────────┘
+                  GitHub (Control de versiones)
+                    │
+             ┌──────▼────────┐
+             │   Backend     │
+             │ Node + Express│
+             └───────┬───────┘
+                     │ Mongoose
+             ┌───────▼───────┐
+             │ MongoDB Atlas │ (el_rincon_escolar)
+             └───────┬───────┘
+                     │ API REST
+             ┌───────▼───────┐
+             │   Frontend    │
+             │ HTML/CSS/JS   │
+             └───────────────┘
 ```
 
-Todos los integrantes del equipo se conectan a la misma base de datos remota para garantizar la consistencia de la información durante el desarrollo.
-
----
-
 ## Estructura del proyecto
+
+Plaintext
 
 ```text
 el-rincon-escolar/
 │
 ├── backend/
-│   ├── models/
-│   │   └── product.js       # Esquemas de Mongoose
-│   │
-│   ├── seed/                # Scripts para poblar la DB
-│   │
-│   └── server.js            # Servidor principal de Express
+│   ├── models/product.js
+│   ├── seed/products.js
+│   └── server.js
 │
 ├── frontend/
-│   ├── app.js               # Lógica del cliente y consumo de API
-│   ├── index.html           # Estructura de la interfaz
-│   └── style.css            # Estilos visuales
+│   ├── app.js
+│   ├── index.html
+│   └── style.css
 │
-├── .env                     # Variables de entorno (NO SUBIR)
-├── .env.example             # Plantilla de variables de entorno
-├── .gitignore               # Archivos excluidos de Git
-└── package.json             # Dependencias y scripts de Node
+├── .env           <-- (NO SE SUBE A GITHUB)
+├── .env.example   <-- (PLANTILLA, SÍ SE SUBE)
+├── .gitignore
+├── package.json
+└── README.md
 ```
 
----
+## Sprints e Historias de Usuario
 
-## Historias de Usuario
+El trabajo está dividido en Sprints estructurados en Jira. A continuación se detalla el progreso actual del backlog:
 
-El desarrollo se gestionó mediante un backlog basado en historias de usuario dentro de Jira.
+### IN Sprint 1 (1 sep - 9 sep)
 
-| ID        | Historia                                                                                                                                        |
-| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| **IN-1**  | Como encargado de tienda, quiero ver la lista de productos con su cantidad disponible, para saber qué hay en existencia.                        |
-| **IN-5**  | Definir un stock mínimo distinto por producto para saber cuándo pedir más.                                                                      |
-| **IN-3**  | Como encargado de tienda, quiero registrar una venta y que descuente del inventario automáticamente, para mantener el conteo actualizado.       |
-| **IN-4**  | Como encargado de tienda, quiero ver una alerta cuando un producto esté por agotarse (stock actual <= stock mínimo), para reabastecer a tiempo. |
-| **IN-28** | Mejorar interfaz de la papelería para facilitar el uso diario.                                                                                  |
-| **IN-29** | Historial y contador de productos vendidos para análisis de ventas.                                                                             |
+**Objetivo del Sprint:** Desarrollar un MVP para la papelería "El Rincón Escolar" que permita al encargado consultar y mantener actualizado el inventario, registrar ventas que descuenten automáticamente las existencias.
 
----
+* **[IN-1] Consultar inventarios de productos:** Como encargado de tienda, quiero ver la lista de productos con su cantidad disponible. **(Estado: Listo)**.
 
-## Requisitos previos
+* **[IN-5] Definir stock mínimo por producto:** Permitir establecer un nivel mínimo de existencia individual. **(Estado: Listo)**.
 
-Para ejecutar el proyecto es necesario contar con:
+* **[IN-3] Registrar venta:** Registrar una venta y descontar el inventario automáticamente. **(Estado: Listo)**.
 
-* Git
-* Node.js
-* Un editor de código, por ejemplo VS Code
+* **[IN-4] Alerta de bajo inventario:** Identificar productos cuyo stock actual sea igual o inferior a su stock mínimo. **(Estado: Listo)**.
 
-> No es necesario instalar MongoDB localmente, ya que el proyecto utiliza **MongoDB Atlas**.
+### IN Sprint 2 (11 sep - 21 sep)
 
----
+**Objetivo del Sprint:** Del MVP que ya se tenía en el Sprint 1, se continuará la creación del mismo, a través de nuevas historias de usuario, las cuales entran como mejorar la interfaz del usuario, al igual un orden.
+
+* **[IN-28] Mejorar interfaz de la papelería:** Refinamiento visual y de experiencia de usuario del MVP. **(Estado: Listo)**.
+
+* **[IN-29] Historial y contador de productos vendidos:** Creación de un registro para visualizar métricas de ventas. **(Estado: Listo)**.
+
+## Definition of Done (DoD) y Sprint Review
+
+Para asegurar la calidad del incremento entregado en cada iteración, nos regimos por estándares estrictos antes de considerar una historia como "Lista" y antes de presentarla en el Sprint Review.
+
+### Definition of Done (DoD)
+
+Ninguna historia o tarea pasa a la columna de **Listo** en Jira sin cumplir el 100% de los siguientes criterios:
+
+* [ ] Las subtareas asignadas están terminadas.
+* [ ] Los Criterios de Aceptación (definidos en la historia) se cumplen en su totalidad.
+* [ ] El código está en su rama correspondiente (`feature/IN-X-nombre`).
+* [ ] El código fue subido a GitHub y se creó un Pull Request (PR).
+* [ ] El código pasó por **Revisión de Código (Code Review)** por al menos un compañero de equipo.
+* [ ] No existen credenciales o datos sensibles (`.env`) en el repositorio.
+* [ ] El PR fue aprobado y el Merge hacia `main` se completó sin conflictos.
+* [ ] Se actualizó el estado en Jira.
+
+### Sprint Review
+
+Al finalizar cada Sprint, el equipo se reúne para la **Sprint Review**. En esta ceremonia:
+
+1. **Demostración:** Se muestra el incremento de software funcionando (el MVP en acción) al Product Owner / Interesados.
+2. **Validación:** Se comprueba que cada funcionalidad resuelve el problema planteado inicialmente (ej. visualizar alertas de stock, descontar ventas en tiempo real).
+3. **Feedback:** Se recopilan comentarios para integrarlos al backlog del siguiente Sprint (como ocurrió en la transición del Sprint 1 al Sprint 2 con las mejoras de interfaz).
 
 ## Configuración inicial
 
-### 1. Clonar el repositorio
+### 1. Clonar el repositorio e instalar dependencias
+
+Bash
 
 ```bash
 git clone https://github.com/RafiuxMax01/el-rincon-escolar.git
 cd el-rincon-escolar
-```
-
-### 2. Instalar las dependencias
-
-```bash
 npm install
 ```
 
-Esto instalará las dependencias definidas en `package.json` y generará la carpeta:
+### 2. Configurar Variables de Entorno (`.env`)
 
-```text
-node_modules/
-```
+El archivo `.env` **NO se obtiene de GitHub**, ya que contiene credenciales privadas.
 
-Esta carpeta se encuentra excluida de Git mediante `.gitignore`.
-
----
-
-## Configuración del archivo `.env`
-
-> **Importante:** el archivo `.env` nunca debe subirse a GitHub.
-
-Crea el archivo `.env` utilizando la plantilla incluida en el proyecto:
+Bash
 
 ```bash
 cp .env.example .env
 ```
 
-Después, edita el archivo `.env` y agrega la URL de conexión a MongoDB Atlas.
+Abre el archivo `.env` generado e introduce la cadena de conexión proporcionada por el responsable del proyecto:
 
-Ejemplo:
+Fragmento de código
 
-```env
-MONGODB_URI=mongodb+srv://<usuario>:<password>@cluster.mongodb.net/el_rincon_escolar
+```text
+MONGODB_URI=mongodb+srv://usuario:contraseña@cluster.mongodb.net/el_rincon_escolar
 PORT=3000
 ```
 
-Las credenciales de acceso a la base de datos deben solicitarse al administrador del proyecto.
+*Nunca hagas commit del archivo **`.env`**. Revisa con **`git status`** antes de subir cambios.*
 
-**No compartas contraseñas mediante Slack, Jira ni capturas de pantalla.**
+### 3. Ejecutar el proyecto
 
----
-
-## Ejecutar el proyecto
-
-Para iniciar el servidor en modo desarrollo:
+Bash
 
 ```bash
 npm run dev
 ```
 
-Una vez iniciado el servidor, accede desde el navegador a:
+La aplicación estará disponible en `http://localhost:3000`.
 
-```text
-http://localhost:3000
-```
+### 4. Poblar la base de datos (Seed)
 
----
+*Advertencia: Ejecutar este script borra los datos actuales y carga los de prueba.*
 
-## Flujo de trabajo: Git, GitHub y Jira
-
-El proyecto utiliza un esquema de trabajo basado en **ramas por historia de usuario** y **Pull Requests obligatorios**.
-
-### 1. Actualizar `main`
-
-Antes de comenzar una nueva historia:
+Bash
 
 ```bash
-git switch main
-git pull origin main
+npm run seed
 ```
 
-### 2. Crear una rama para la historia de Jira
+## Flujo de trabajo con Git y GitHub
 
-La nomenclatura de la rama debe incluir el identificador de Jira.
+1. **Actualizar siempre `main` antes de empezar:**
 
-Ejemplo:
+   Bash
 
-```bash
-git switch -c feature/IN-5-stock-minimo
-```
+   ```bash
+   git switch main
+   git pull origin main
+   ```
 
-### 3. Desarrollar la funcionalidad
+2. **Crear rama por Historia de Jira:** No se crean ramas por subtarea, sino por historia principal.
 
-Realizar cambios únicamente relacionados con la historia de usuario correspondiente.
+   Bash
 
-Se recomienda trabajar mediante commits atómicos y descriptivos.
+   ```bash
+   git switch -c feature/IN-5-stock-minimo
+   ```
 
-Ejemplo:
+3. **Guardar cambios y crear Commit descriptivo (incluyendo el ID de Jira):**
 
-```bash
-git add .
-git commit -m "IN-5: Se agregó el campo stockMinimo al modelo de Mongoose"
-```
+   Bash
 
-### 4. Subir la rama a GitHub
+   ```bash
+   git add .
+   git commit -m "IN-5 Implementar lógica de validación para stock mínimo"
+   ```
 
-```bash
-git push -u origin feature/IN-5-stock-minimo
-```
+4. **Subir rama y crear Pull Request:**
 
-### 5. Crear el Pull Request
+   Bash
 
-Una vez terminada la historia:
+   ```bash
+   git push -u origin feature/IN-5-stock-minimo
+   ```
 
-```text
-feature/IN-5-stock-minimo
-          |
-          v
-      Pull Request
-          |
-          v
-    Code Review
-          |
-          v
-       Aprobación
-          |
-          v
-       main
-```
+5. **Revisión y Merge:** Esperar revisión de código de un compañero. Tras la aprobación, se integra a `main`.
 
-El Pull Request debe ser revisado y aprobado por un compañero antes de realizar el merge a `main`.
+## Reglas importantes
 
-### Regla principal
-
-**No trabajar directamente sobre `main`.**
-
-Cada funcionalidad debe desarrollarse en su propia rama y posteriormente integrarse mediante Pull Request.
-
----
-
-## Estado actual del proyecto
-
-El MVP cuenta actualmente con las siguientes funcionalidades implementadas.
-
-### Sprint 1 — Completado
-
-| Historia | Funcionalidad                                                   | Estado     |
-| -------- | --------------------------------------------------------------- | ---------- |
-| **IN-1** | Consulta de inventario de productos                             | Completado |
-| **IN-5** | Definición de stock mínimo por producto                         | Completado |
-| **IN-3** | Registro de ventas con descuento automático en la base de datos | Completado |
-| **IN-4** | Alerta visual de bajo inventario                                | Completado |
-
-### Sprint 2 — Completado
-
-| Historia  | Funcionalidad                                      | Estado     |
-| --------- | -------------------------------------------------- | ---------- |
-| **IN-28** | Mejora integral de la interfaz de usuario          | Completado |
-| **IN-29** | Historial y contador general de productos vendidos | Completado |
-
----
-
-## MVP actual
-
-El sistema permite actualmente:
-
-1. Consultar los productos disponibles.
-2. Visualizar las cantidades existentes.
-3. Definir un stock mínimo individual para cada producto.
-4. Registrar ventas.
-5. Descontar automáticamente las unidades vendidas del inventario.
-6. Detectar productos cuyo stock actual sea menor o igual al stock mínimo.
-7. Mostrar alertas visuales de bajo inventario.
-8. Consultar el historial de productos vendidos.
-9. Visualizar un contador general de productos vendidos.
-10. Utilizar una interfaz mejorada para facilitar las operaciones diarias.
-
----
-
-## Flujo general del sistema
-
-```text
-                    Usuario
-                       │
-                       ▼
-              ┌─────────────────┐
-              │    Frontend     │
-              │   HTML/CSS/JS   │
-              └────────┬────────┘
-                       │
-                    API REST
-                       │
-                       ▼
-              ┌─────────────────┐
-              │     Express     │
-              │     + Node      │
-              └────────┬────────┘
-                       │
-                    Mongoose
-                       │
-                       ▼
-              ┌─────────────────┐
-              │  MongoDB Atlas  │
-              │    products     │
-              └─────────────────┘
-```
-
-El flujo permite que las operaciones realizadas desde la interfaz sean procesadas por el backend y posteriormente almacenadas o consultadas en MongoDB Atlas.
-
----
-
-## Control de versiones
-
-El proyecto utiliza Git y GitHub como herramientas principales para el control de versiones y colaboración.
-
-El flujo establecido es:
-
-```text
-Jira
-  │
-  ▼
-Historia de Usuario
-  │
-  ▼
-Feature Branch
-  │
-  ▼
-Desarrollo
-  │
-  ▼
-Commit
-  │
-  ▼
-Push
-  │
-  ▼
-Pull Request
-  │
-  ▼
-Code Review
-  │
-  ▼
-Merge
-  │
-  ▼
-main
-```
-
----
-
-## Proyecto
-
-**Papelería "El Rincón Escolar"**
-
-Sistema web para la gestión de inventario, ventas y reabastecimiento de productos.
+1. **NO hacer push directamente a `main`.** Todo cambio entra por Pull Request.
+2. **NO subir `.env` ni `node_modules`.**
+3. **Identificador de Jira en todo momento:** Las ramas, commits y Pull Requests deben iniciar con la clave del ticket (ej. `IN-3`).
+4. **No modificar código de otra historia sin coordinación.** Si un cambio afecta el área de otro desarrollador, comunícalo antes de intervenir.
+5. **Ante un conflicto de Git:** No borres archivos a ciegas. Comunícate con el equipo para una resolución segura.
